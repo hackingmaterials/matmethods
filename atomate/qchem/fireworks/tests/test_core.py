@@ -956,7 +956,6 @@ class TestCore(AtomateTest):
                 molecule=self.act_mol,
                 multiwfn_command=">>multiwfn_command<<",
                 wfn_file="WAVEFUNCTION.wfn",
-                output_file="qtaim.out"
             ).as_dict(),
         )
         self.assertEqual(
@@ -1009,7 +1008,6 @@ class TestCore(AtomateTest):
                 molecule=self.act_mol,
                 multiwfn_command=">>multiwfn_command<<",
                 wfn_file="WAVEFUNCTION.wfn",
-                output_file="qtaim.out"
             ).as_dict(),
         )
         self.assertEqual(
