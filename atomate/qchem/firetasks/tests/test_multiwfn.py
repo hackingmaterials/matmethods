@@ -63,7 +63,7 @@ class TestRunMultiwfn_QTAIM(AtomateTest):
 
         this_output = process_multiwfn_qtaim(
             self.mol,
-            "Cpprop.txt"
+            "CPprop.txt"
         )
 
         for root in ["atom", "bond", "ring", "cage"]:
