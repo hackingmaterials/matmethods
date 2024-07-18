@@ -9,6 +9,7 @@ from pymatgen.io.qchem.outputs import QCOutput
 from atomate.qchem.firetasks.critic2 import ProcessCritic2, RunCritic2
 from atomate.qchem.firetasks.fragmenter import FragmentMolecule
 from atomate.qchem.firetasks.geo_transformations import PerturbGeometry
+from atomate.qchem.firetasks.multiwfn import RunMultiwfn_QTAIM
 from atomate.qchem.firetasks.parse_outputs import ProtCalcToDb, QChemToDb
 from atomate.qchem.firetasks.run_calc import RunQChemCustodian
 from atomate.qchem.firetasks.write_inputs import WriteInputFromIOSet
@@ -23,6 +24,7 @@ from atomate.qchem.fireworks.core import (
     ProtonEnergyFW,
     SinglePointFW,
     TransitionStateFW,
+    WfnAndQTAIMFW
 )
 from atomate.utils.testing import AtomateTest
 
@@ -924,3 +926,98 @@ class TestCore(AtomateTest):
         )
         self.assertEqual(firework.parents, [])
         self.assertEqual(firework.name, "special cube and critic2")
+
+    def test_WfnAndQTAIMFW_defaults(self):
+        firework = WfnAndQTAIMFW(molecule=self.act_mol)
+        self.assertEqual(
+            firework.tasks[0].as_dict(),
+            WriteInputFromIOSet(
+                molecule=self.act_mol,
+                qchem_input_set="SinglePointSet",
+                input_file="mol.qin",
+                qchem_input_params={"output_wavefunction": True},
+            ).as_dict(),
+        )
+        self.assertEqual(
+            firework.tasks[1].as_dict(),
+            RunQChemCustodian(
+                qchem_cmd=">>qchem_cmd<<",
+                multimode=">>multimode<<",
+                input_file="mol.qin",
+                output_file="mol.qout",
+                max_cores=">>max_cores<<",
+                max_errors=5,
+                job_type="normal",
+            ).as_dict(),
+        )
+        self.assertEqual(
+            firework.tasks[2].as_dict(),
+            RunMultiwfn_QTAIM(
+                molecule=self.act_mol,
+                multiwfn_command=">>multiwfn_command<<",
+                wfn_file="WAVEFUNCTION.wfn",
+            ).as_dict(),
+        )
+        self.assertEqual(
+            firework.tasks[3].as_dict(),
+            QChemToDb(
+                db_file=None,
+                input_file="mol.qin",
+                output_file="mol.qout",
+                additional_fields={"task_label": "Wavefunction and QTAIM"},
+            ).as_dict(),
+        )
+        self.assertEqual(firework.parents, [])
+        self.assertEqual(firework.name, "Wavefunction and QTAIM")
+
+    def test_WfnAndQTAIMFW_not_defaults(self):
+        firework = WfnAndQTAIMFW(
+            molecule=self.act_mol,
+            name="special multiwfn QTAIM",
+            qchem_cmd="qchem -slurm",
+            multimode="mpi",
+            max_cores=12,
+            qchem_input_params={"pcm_dielectric": 10.0},
+            db_file=db_file,
+            parents=None,
+        )
+        self.assertEqual(
+            firework.tasks[0].as_dict(),
+            WriteInputFromIOSet(
+                molecule=self.act_mol,
+                qchem_input_set="SinglePointSet",
+                input_file="mol.qin",
+                qchem_input_params={"pcm_dielectric": 10.0, "output_wavefunction": True},
+            ).as_dict(),
+        )
+        self.assertEqual(
+            firework.tasks[1].as_dict(),
+            RunQChemCustodian(
+                qchem_cmd="qchem -slurm",
+                multimode="mpi",
+                input_file="mol.qin",
+                output_file="mol.qout",
+                max_cores=12,
+                max_errors=5,
+                job_type="normal",
+            ).as_dict(),
+        )
+        self.assertEqual(
+            firework.tasks[2].as_dict(),
+            RunMultiwfn_QTAIM(
+                molecule=self.act_mol,
+                multiwfn_command=">>multiwfn_command<<",
+                wfn_file="WAVEFUNCTION.wfn",
+            ).as_dict(),
+        )
+        self.assertEqual(
+            firework.tasks[3].as_dict(),
+            QChemToDb(
+                db_file=db_file,
+                input_file="mol.qin",
+                output_file="mol.qout",
+                additional_fields={"task_label": "special multiwfn QTAIM"},
+            ).as_dict(),
+        )
+        self.assertEqual(firework.parents, [])
+        self.assertEqual(firework.name, "special multiwfn QTAIM")

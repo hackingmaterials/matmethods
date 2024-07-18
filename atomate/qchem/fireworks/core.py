@@ -11,6 +11,7 @@ from pymatgen.core.structure import Molecule
 from atomate.qchem.firetasks.critic2 import ProcessCritic2, RunCritic2
 from atomate.qchem.firetasks.fragmenter import FragmentMolecule
 from atomate.qchem.firetasks.geo_transformations import PerturbGeometry
+from atomate.qchem.firetasks.multiwfn import RunMultiwfn_QTAIM
 from atomate.qchem.firetasks.parse_outputs import ProtCalcToDb, QChemToDb
 from atomate.qchem.firetasks.run_calc import RunQChemCustodian
 from atomate.qchem.firetasks.write_inputs import WriteInputFromIOSet
@@ -1027,6 +1028,95 @@ class CubeAndCritic2FW(Firework):
         )
         t.append(RunCritic2(molecule=molecule, cube_file="dens.0.cube.gz"))
         t.append(ProcessCritic2(molecule=molecule))
+        t.append(
+            QChemToDb(
+                db_file=db_file,
+                input_file=input_file,
+                output_file=output_file,
+                additional_fields={"task_label": name},
+            )
+        )
+        super().__init__(t, parents=parents, name=name, **kwargs)
+
+
+class WfnAndQTAIMFW(Firework):
+    def __init__(
+        self,
+        molecule=None,
+        name="Wavefunction and QTAIM",
+        qchem_cmd=">>qchem_cmd<<",
+        multimode=">>multimode<<",
+        max_cores=">>max_cores<<",
+        multiwfn_command=">>multiwfn_command<<",
+        qchem_input_params=None,
+        db_file=None,
+        parents=None,
+        max_errors=5,
+        **kwargs
+    ):
+        """
+        Perform a Q-Chem single point calculation in order to generate a wavefunction file of the electron density
+        and then analyze the electron density critical points with the Multiwfn package.
+
+        Args:
+            molecule (Molecule): Input molecule.
+            name (str): Name for the Firework.
+            qchem_cmd (str): Command to run QChem. Supports env_chk.
+            multimode (str): Parallelization scheme, either openmp or mpi. Supports env_chk.
+            max_cores (int): Maximum number of cores to parallelize over. Supports env_chk.
+            multiwfn_command (str): Terminal command for Multiwfn. Supports env_chk.
+            qchem_input_params (dict): Specify kwargs for instantiating the input set parameters.
+                Basic uses would be to modify the default inputs of the set, such as dft_rung,
+                basis_set, pcm_dielectric, scf_algorithm, or max_scf_cycles. See
+                pymatgen/io/qchem/sets.py for default values of all input parameters. For
+                instance, if a user wanted to use a more advanced DFT functional, include a pcm
+                with a dielectric of 30, and use a larger basis, the user would set
+                qchem_input_params = {"dft_rung": 5, "pcm_dielectric": 30, "basis_set":
+                "6-311++g**"}. However, more advanced customization of the input is also
+                possible through the overwrite_inputs key which allows the user to directly
+                modify the rem, pcm, smd, and solvent dictionaries that QChemDictSet passes to
+                inputs.py to print an actual input file. For instance, if a user wanted to set
+                the sym_ignore flag in the rem section of the input file to true, then they
+                would set qchem_input_params = {"overwrite_inputs": "rem": {"sym_ignore":
+                "true"}}. Of course, overwrite_inputs could be used in conjunction with more
+                typical modifications, as seen in the test_double_FF_opt workflow test.
+            db_file (str): Path to file specifying db credentials to place output parsing.
+            parents ([Firework]): Parents of this particular Firework.
+            **kwargs: Other kwargs that are passed to Firework.__init__.
+        """
+
+        qchem_input_params = copy.deepcopy(qchem_input_params) or {}
+        qchem_input_params["output_wavefunction"] = True
+
+        input_file = "mol.qin"
+        output_file = "mol.qout"
+        t = []
+        t.append(
+            WriteInputFromIOSet(
+                molecule=molecule,
+                qchem_input_set="SinglePointSet",
+                input_file=input_file,
+                qchem_input_params=qchem_input_params,
+            )
+        )
+        t.append(
+            RunQChemCustodian(
+                qchem_cmd=qchem_cmd,
+                multimode=multimode,
+                input_file=input_file,
+                output_file=output_file,
+                max_cores=max_cores,
+                max_errors=max_errors,
+                job_type="normal",
+            )
+        )
+        t.append(
+            RunMultiwfn_QTAIM(
+                molecule=molecule,
+                multiwfn_command=multiwfn_command,
+                wfn_file="WAVEFUNCTION.wfn"
+            )
+        )
         t.append(
             QChemToDb(
                 db_file=db_file,
