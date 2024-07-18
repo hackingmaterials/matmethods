@@ -1110,11 +1110,12 @@ class WfnAndQTAIMFW(Firework):
                 job_type="normal",
             )
         )
-        t.append(RunMultiwfn_QTAIM(
-            molecule=molecule,
-            multiwfn_command=multiwfn_command,
-            wfn_file="WAVEFUNCTION.wfn",
-            output_file="qtaim.out"))
+        t.append(
+            RunMultiwfn_QTAIM(
+                molecule=molecule,
+                multiwfn_command=multiwfn_command,
+                wfn_file="WAVEFUNCTION.wfn")
+            )
         t.append(
             QChemToDb(
                 db_file=db_file,

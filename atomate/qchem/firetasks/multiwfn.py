@@ -37,7 +37,7 @@ class RunMultiwfn_QTAIM(FiretaskBase):
         output_file (str): Name of the output file containing the Multiwfn outputs
     """
 
-    required_params = ["molecule", "multiwfn_command", "wfn_file", "output_file"]
+    required_params = ["molecule", "multiwfn_command", "wfn_file"]
 
     def run_task(self, fw_spec):
         if fw_spec.get("prev_calc_molecule"):
@@ -82,7 +82,7 @@ q
         with open("multiwfn_options.txt", "w") as file:
             file.write(input_script)
 
-        cmd = f"{self.get('multiwfn_command')} {wfn} < multiwfn_options.txt | tee {self.get('output_file')}"
+        cmd = f"{self.get('multiwfn_command')} {wfn} < multiwfn_options.txt"
 
         logger.info(f"Running command: {cmd}")
         return_code = subprocess.call(cmd, shell=True)
