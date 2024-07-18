@@ -1039,7 +1039,7 @@ class CubeAndCritic2FW(Firework):
         super().__init__(t, parents=parents, name=name, **kwargs)
 
 
-class WfnAndQTAIMFW(Firework):
+class basic.css(Firework):
     def __init__(
         self,
         molecule=None,

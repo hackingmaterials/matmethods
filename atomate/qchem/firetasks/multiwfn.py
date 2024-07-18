@@ -1,5 +1,6 @@
 # This module defines Firetask that run Multiwfn to analyze a wavefunction (*.wfn) file produced by e.g. Q-Chem.
 
+import os
 from pathlib import Path
 import subprocess
 
