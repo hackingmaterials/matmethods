@@ -5,8 +5,9 @@ import unittest
 from shutil import which
 
 from pymatgen.io.qchem.outputs import QCOutput
+from pymatgen.io.multiwfn import process_multiwfn_qtaim
 
-from atomate.qchem.firetasks.critic2 import ProcessCritic2, RunCritic2
+from atomate.qchem.firetasks.multiwfn import RunMultiwfn_QTAIM
 from atomate.utils.testing import AtomateTest
 
 __author__ = "Evan Spotte-Smith"
@@ -25,47 +26,58 @@ class TestRunMultiwfn_QTAIM(AtomateTest):
                 "..",
                 "..",
                 "test_files",
-                "critic_test_files",
-                "small_critic_example",
+                "multiwfn_example",
             )
         )
-        out_file = "mol.qout"
+        out_file = "mol.qout.gz"
         qc_out = QCOutput(filename=out_file)
         self.mol = qc_out.data["initial_molecule"]
-        self.cube_file = "dens.0.cube"
+        self.wavefunction = "WAVEFUNCTION.wfn.gz"
         super().setUp(lpad=False)
 
     def tearDown(self):
-        os.remove("cpreport.json")
-        os.remove("yt.json")
+        os.remove("multiwfn_options.txt")
+        os.remove("CPprop.txt")
 
-    def test_RunCritic2(self):
+    def test_run(self):
         os.chdir(
             os.path.join(
                 module_dir,
                 "..",
                 "..",
                 "test_files",
-                "critic_test_files",
-                "small_critic_example",
+                "multiwfn_example"
             )
         )
-        firetask = RunCritic2(molecule=self.mol, cube_file="dens.0.cube.gz")
+        firetask = RunMultiwfn_QTAIM(
+            molecule=self.mol,
+            multiwfn_command="Multiwfn_noGUI",
+            wfn_file="WAVEFUNCTION.wfn.gz"
+        )
         firetask.run_task(fw_spec={})
-        with open("cpreport_correct.json") as f:
-            cpreport_reference = json.load(f)
-        with open("yt_correct.json") as f:
-            yt_reference = json.load(f)
-        with open("cpreport.json") as f:
-            cpreport = json.load(f)
-        with open("yt.json") as f:
-            yt = json.load(f)
-        # Context for below - reference files were built before units were added
-        # to Critic2, and we avoid testing the actual critical points because they
-        # can change order between runs. But comparing everything else is sufficient.
-        for key in cpreport:
-            if key in ["structure", "field"]:
-                self.assertEqual(cpreport_reference[key], cpreport[key])
-        for key in yt:
-            if key != "units":
-                self.assertEqual(yt_reference[key], yt[key])
+
+        reference = process_multiwfn_qtaim(
+            self.mol,
+            "CPprop_correct.txt"
+        )
+
+        this_output = process_multiwfn_qtaim(
+            self.mol,
+            "Cpprop.txt"
+        )
+
+        for root in ["atom", "bond", "ring", "cage"]:
+            assert len(reference[root]) == len(this_output[root])
+
+            for k, v in reference[root].items():
+                assert k in this_output[root]
+
+                for kk, vv in reference[root][k].items():
+                    output_val = this_output[root][k].get(kk)
+                    if isinstance(vv, list):
+                        assert isinstance(output_val, list)
+                        assert len(vv) == len(output_val)
+                        for index, vvelem in enumerate(vv):
+                            self.assertAlmostEqual(vvelem, output_val[index])
+
+                    self.assertAlmostEqual(vv, output_val)
