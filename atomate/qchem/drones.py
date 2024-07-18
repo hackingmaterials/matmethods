@@ -14,12 +14,13 @@ from pymatgen.core import Molecule
 from pymatgen.io.babel import BabelMolAdaptor
 from pymatgen.io.qchem.inputs import QCInput
 from pymatgen.io.qchem.outputs import QCOutput
+from pymatgen.io.multiwfn import process_multiwfn_qtaim
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 
 from atomate import __version__ as atomate_version
 from atomate.utils.utils import get_logger
 
-__author__ = "Samuel Blau"
+__author__ = "Samuel Blau, Evan Spotte-Smith"
 __copyright__ = "Copyright 2018, The Materials Project"
 __version__ = "0.1"
 __maintainer__ = "Samuel Blau"
