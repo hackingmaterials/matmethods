@@ -1,6 +1,5 @@
 # This module defines Firetask that run Multiwfn to analyze a wavefunction (*.wfn) file produced by e.g. Q-Chem.
 
-
 from pathlib import Path
 import subprocess
 
@@ -34,7 +33,7 @@ class RunMultiwfn_QTAIM(FiretaskBase):
                              the molecule required param.
         multiwfn_command (str): Shell command to run Multiwfn
         wfn_file (str): Name of the wavefunction file being analyzed
-
+        output_file (str): Name of the output file containing the Multiwfn outputs
     """
 
     required_params = ["molecule", "multiwfn_command", "wfn_file", "output_file"]
@@ -52,6 +51,10 @@ class RunMultiwfn_QTAIM(FiretaskBase):
         compress_at_end = False
 
         wfn = self.get("wfn_file")
+
+        # File might be compressed
+        if not os.path.exists(wfn) and not wfn.endswith(".gz"):
+            wfn += ".gz"
 
         if wfn[-3:] == ".gz":
             compress_at_end = True

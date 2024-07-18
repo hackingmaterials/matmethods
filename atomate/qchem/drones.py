@@ -9,6 +9,8 @@ from itertools import chain
 
 from monty.io import zopen
 from monty.json import jsanitize
+from monty.shutil import compress_file, decompress_file
+
 from pymatgen.apps.borg.hive import AbstractDrone
 from pymatgen.core import Molecule
 from pymatgen.io.babel import BabelMolAdaptor
@@ -20,7 +22,7 @@ from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from atomate import __version__ as atomate_version
 from atomate.utils.utils import get_logger
 
-__author__ = "Samuel Blau, Evan Spotte-Smith"
+__author__ = "Samuel Blau"
 __copyright__ = "Copyright 2018, The Materials Project"
 __version__ = "0.1"
 __maintainer__ = "Samuel Blau"
@@ -503,6 +505,15 @@ class QChemDrone(AbstractDrone):
             if len(filenames) >= 1:
                 with zopen(filenames[0], "rt") as f:
                     d["critic2"]["bonding"] = json.load(f)
+        # filenames = glob.glob(os.path.join(fullpath, "CPprop.txt*"))
+        # if len(filenames) >= 1:
+        #     filename = filenames[0]
+        #     recompress = False
+        #     if filename[-3:] == ".gz":
+        #         recompress = True
+        #         decompress_file(os.path.join(fullpath, filename))
+        #         filename = filename[:-3]
+            
 
     def validate_doc(self, d):
         """
