@@ -1114,8 +1114,9 @@ class WfnAndQTAIMFW(Firework):
             RunMultiwfn_QTAIM(
                 molecule=molecule,
                 multiwfn_command=multiwfn_command,
-                wfn_file="WAVEFUNCTION.wfn")
+                wfn_file="WAVEFUNCTION.wfn"
             )
+        )
         t.append(
             QChemToDb(
                 db_file=db_file,

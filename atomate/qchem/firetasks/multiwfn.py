@@ -8,7 +8,7 @@ from fireworks import FiretaskBase, explicit_serialize
 from monty.serialization import dumpfn, loadfn
 from monty.shutil import compress_file, decompress_file
 
-from atomate.utils.utils import get_logger
+from atomate.utils.utils import env_chk, get_logger
 
 __author__ = "Evan Spotte-Smith"
 __copyright__ = "Copyright 2024, The Materials Project"
@@ -34,7 +34,6 @@ class RunMultiwfn_QTAIM(FiretaskBase):
                              the molecule required param.
         multiwfn_command (str): Shell command to run Multiwfn
         wfn_file (str): Name of the wavefunction file being analyzed
-        output_file (str): Name of the output file containing the Multiwfn outputs
     """
 
     required_params = ["molecule", "multiwfn_command", "wfn_file"]
@@ -82,7 +81,9 @@ q
         with open("multiwfn_options.txt", "w") as file:
             file.write(input_script)
 
-        cmd = f"{self.get('multiwfn_command')} {wfn} < multiwfn_options.txt"
+        base_command = env_chk(self.get("multiwfn_command"), fw_spec)
+
+        cmd = f"{base_command} {wfn} < multiwfn_options.txt"
 
         logger.info(f"Running command: {cmd}")
         return_code = subprocess.call(cmd, shell=True)

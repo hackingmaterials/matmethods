@@ -505,27 +505,27 @@ class QChemDrone(AbstractDrone):
             if len(filenames) >= 1:
                 with zopen(filenames[0], "rt") as f:
                     d["critic2"]["bonding"] = json.load(f)
-        # filenames = glob.glob(os.path.join(fullpath, "CPprop.txt*"))
-        # if len(filenames) >= 1:
-        #     filename = filenames[0]
-        #     recompress = False
-        #     if filename[-3:] == ".gz":
-        #         recompress = True
-        #         decompress_file(os.path.join(fullpath, filename))
-        #         filename = filename[:-3]
+        filenames = glob.glob(os.path.join(fullpath, "CPprop.txt*"))
+        if len(filenames) >= 1:
+            filename = filenames[0]
+            recompress = False
+            if filename[-3:] == ".gz":
+                recompress = True
+                decompress_file(os.path.join(fullpath, filename))
+                filename = filename[:-3]
             
-        #     if "optimized_molecule" in d["output"]:
-        #         mol = d["output"]["optimized_molecule"]
-        #     else:
-        #         mol = d["output"]["initial_molecule"]
+            if "optimized_molecule" in d["output"]:
+                mol = d["output"]["optimized_molecule"]
+            else:
+                mol = d["output"]["initial_molecule"]
 
-        #     if not isinstance(mol, Molecule):
-        #         mol = Molecule.from_dict(mol)
+            if not isinstance(mol, Molecule):
+                mol = Molecule.from_dict(mol)
 
-        #     d["output"]["qtaim"] = process_multiwfn_qtaim(mol, os.path.join(fullpath, filename))
+            d["output"]["qtaim"] = process_multiwfn_qtaim(mol, os.path.join(fullpath, filename))
 
-        #     if recompress:
-        #         compress_file(os.path.join(fullpath, filename))
+            if recompress:
+                compress_file(os.path.join(fullpath, filename))
             
 
     def validate_doc(self, d):
